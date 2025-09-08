@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Miguel_A._Lazaro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --gap: 12px; --border: #e5e7eb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans"; color:#111827; }
+    header { padding: 10px var(--gap); border-bottom:1px solid var(--border); display:flex; gap:var(--gap); align-items:center; flex-wrap:wrap; }
+    header h1 { margin:0; font-size:18px; font-weight:600; }
+    .controls { display:flex; gap:var(--gap); align-items:center; flex:1; }
+    input, select { padding:8px 10px; border:1px solid var(--border); border-radius:8px; min-width:260px; }
+    .layout { display:grid; grid-template-columns:320px 1fr; gap:var(--gap); height:calc(100vh - 66px); padding:var(--gap); }
+    .sidebar { border:1px solid var(--border); border-radius:10px; padding:var(--gap); overflow:auto; }
+    .sidebar h2 { margin:0 0 8px 0; font-size:14px; color:#374151; }
+    .file-list { list-style:none; margin:0; padding:0; }
+    .file-list li a{ display:block; padding:8px; border-radius:8px; text-decoration:none; color:#111827; }
+    .file-list li a:hover{ background:#f3f4f6; }
+    .viewer { border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+    iframe { width:100%; height:100%; border:0; }
+    .current { font-size:12px; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50vw; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Miguel_A._Lazaro</h1>
+    <div class="controls">
+      <input id="filter" type="text" placeholder="Filtrar páginas por nombre…" />
+      <select id="pageSelect" title="Selecciona una página"></select>
+      <span id="currentName" class="current"></span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>Páginas (<span id="count"></span>)</h2>
+      <ul id="pageList" class="file-list"></ul>
+    </aside>
+    <main class="viewer">
+      <iframe id="viewer" src=""></iframe>
+    </main>
+  </div>
+
+  <script>
+    const PAGES = ["Miguel_A._Lazaro__UD1_segovia-carbonero_el_mayor-espinar_(el).html", "Miguel_A._Lazaro__UD2_avila-cebreros-navaluenga-navas_del_marques_(las).html", "Miguel_A._Lazaro__UD3_laguna_de_duero-fuensaldana-medina_de_rioseco.html", "Miguel_A._Lazaro__UD4_medina_del_campo-tordesillas.html", "Miguel_A._Lazaro__UD5_bejar-barco_de_avila_(el)-ciudad_rodrigo.html", "Miguel_A._Lazaro__UD6_arevalo-nava_de_la_asuncion.html", "Miguel_A._Lazaro__UD7_iscar-cuellar.html", "Miguel_A._Lazaro__UD8_arenas_de_san_pedro-adrada_(la)-candeleda.html", "Miguel_A._Lazaro__UD9_santa_marta_de_tormes-penaranda_de_bracamonte.html", "Miguel_A._Lazaro__UD10_guijuelo-piedrahita.html", "Miguel_A._Lazaro__UD11_cantalejo-penafiel.html", "Miguel_A._Lazaro__UD12_salamanca.html", "Miguel_A._Lazaro__UD16_valladolid.html"];            // nombres EXACTOS (con .html)
+    const BASE  = "../out/";           // '../out/' (ruta relativa)
+    const selectEl = document.getElementById('pageSelect');
+    const listEl   = document.getElementById('pageList');
+    const viewer   = document.getElementById('viewer');
+    const current  = document.getElementById('currentName');
+    const filterEl = document.getElementById('filter');
+    const countEl  = document.getElementById('count');
+
+    function populate() {
+      countEl.textContent = PAGES.length;
+      for (const name of PAGES) {
+        const opt = document.createElement('option');
+        opt.value = name; opt.textContent = name;
+        selectEl.appendChild(opt);
+        const li = document.createElement('li');
+        const a  = document.createElement('a');
+        a.href = '#' + encodeURIComponent(name);
+        a.textContent = name;
+        a.addEventListener('click', (e) => { e.preventDefault(); load(name); });
+        li.appendChild(a); listEl.appendChild(li);
+      }
+    }
+
+    function load(name) {
+      if (!PAGES.includes(name)) return;
+      viewer.src = BASE + name;      // Carga desde ../out/<archivo.html>
+      current.textContent = name;
+      const h = '#' + encodeURIComponent(name);
+      if (location.hash !== h) history.replaceState(null, '', h);
+      if (selectEl.value !== name) selectEl.value = name;
+    }
+
+    function fromHashOrFirst() {
+      const name = decodeURIComponent(location.hash.slice(1));
+      if (name && PAGES.includes(name)) load(name); else load(PAGES[0]);
+    }
+
+    function applyFilter(q) {
+      q = q.trim().toLowerCase();
+      for (const opt of selectEl.options) opt.hidden = q && !opt.value.toLowerCase().includes(q);
+      for (const li of listEl.children) {
+        const t = li.textContent.toLowerCase();
+        li.style.display = (q && !t.includes(q)) ? 'none' : '';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populate();
+      selectEl.addEventListener('change', () => load(selectEl.value));
+      filterEl.addEventListener('input', () => applyFilter(filterEl.value));
+      window.addEventListener('hashchange', fromHashOrFirst);
+      fromHashOrFirst();
+    });
+  </script>
+</body>
+</html>
